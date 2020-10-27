@@ -4,7 +4,7 @@ using UnityEngine;
 using Random = Unity.Mathematics.Random;
 
 [Flags]
-enum Tile
+public enum TileType
 {
     None = 0,
     Up = 1 << 0,
@@ -15,7 +15,7 @@ enum Tile
 
 public class Maze : MonoBehaviour
 {
-    Tile[,] tiles;
+    public Tile[,] tiles;
     public int size;
     public GameObject tilePrefab;
 
@@ -24,27 +24,42 @@ public class Maze : MonoBehaviour
         while (transform.childCount > 0)
             DestroyImmediate(transform.GetChild(0).gameObject);
 
-        tiles = new Tile[size, size];
         var random = new Random((uint) Environment.TickCount);
 
-        for (var x = 0; x < tiles.GetLength(0); x++)
+        for (var x = 0; x < size; x++)
         {
-            for (var y = 0; y < tiles.GetLength(1); y++)
+            for (var y = 0; y < size; y++)
             {
-                var tile = Tile.None;
-                if (random.NextBool()) tile |= Tile.Up;
-                if (random.NextBool()) tile |= Tile.Down;
-                if (random.NextBool()) tile |= Tile.Left;
-                if (random.NextBool()) tile |= Tile.Right;
-                tiles[x, y] = tile;
+                var tileType = TileType.None;
+                if (random.NextBool()) tileType |= TileType.Up;
+                if (random.NextBool()) tileType |= TileType.Down;
+                if (random.NextBool()) tileType |= TileType.Left;
+                if (random.NextBool()) tileType |= TileType.Right;
 
                 var gameObject = Instantiate(tilePrefab, new Vector3(x, 0, y), Quaternion.identity, transform);
                 gameObject.name = $"Tile ({x}, {y})";
-                if (tile != Tile.None) DestroyImmediate(gameObject.transform.Find("Center").gameObject);
-                if (tile.HasFlag(Tile.Up)) DestroyImmediate(gameObject.transform.Find("Up").gameObject);
-                if (tile.HasFlag(Tile.Down)) DestroyImmediate(gameObject.transform.Find("Down").gameObject);
-                if (tile.HasFlag(Tile.Left)) DestroyImmediate(gameObject.transform.Find("Left").gameObject);
-                if (tile.HasFlag(Tile.Right)) DestroyImmediate(gameObject.transform.Find("Right").gameObject);
+                if (tileType != TileType.None) DestroyImmediate(gameObject.transform.Find("Center").gameObject);
+                if (tileType.HasFlag(TileType.Up)) DestroyImmediate(gameObject.transform.Find("Up").gameObject);
+                if (tileType.HasFlag(TileType.Down)) DestroyImmediate(gameObject.transform.Find("Down").gameObject);
+                if (tileType.HasFlag(TileType.Left)) DestroyImmediate(gameObject.transform.Find("Left").gameObject);
+                if (tileType.HasFlag(TileType.Right)) DestroyImmediate(gameObject.transform.Find("Right").gameObject);
+
+                var tile = gameObject.GetComponent<Tile>();
+                tile.maze = this;
+                tile.gridPosition = new Vector2Int(x, y);
+            }
+        }
+    }
+
+    void Awake()
+    {
+        tiles = new Tile[size, size];
+
+        for (var x = 0; x < size; x++)
+        {
+            for (var y = 0; y < size; y++)
+            {
+                tiles[x, y] = transform.GetChild(x * size + y).GetComponent<Tile>();
             }
         }
     }
