@@ -18,6 +18,7 @@ public class Maze : MonoBehaviour
     public Tile[,] tiles;
     public int size;
     public GameObject tilePrefab;
+    public GameObject player;
 
     public void Generate()
     {

@@ -24,7 +24,7 @@ public class Tile : MonoBehaviour
 
         foreach (var tile in maze.tiles)
         {
-            tile.transform.position = new Vector3(tile.gridPosition.x, 0, tile.gridPosition.y);
+            tile.SetPosition(new Vector3(tile.gridPosition.x, 0, tile.gridPosition.y));
         }
 
         if (abs(diff.x) > abs(diff.z))
@@ -33,7 +33,7 @@ public class Tile : MonoBehaviour
             {
                 if (tile.gridPosition.y == (int) originalPosition.z)
                 {
-                    tile.transform.position = new Vector3(tile.gridPosition.x + diff.x, 0, originalPosition.z);
+                    tile.SetPosition(new Vector3(tile.gridPosition.x + diff.x, 0, originalPosition.z));
                 }
             }
         }
@@ -43,7 +43,7 @@ public class Tile : MonoBehaviour
             {
                 if (tile.gridPosition.x == (int) originalPosition.x)
                 {
-                    tile.transform.position = new Vector3(originalPosition.x, 0, tile.gridPosition.y + diff.z);
+                    tile.SetPosition(new Vector3(originalPosition.x, 0, tile.gridPosition.y + diff.z));
                 }
             }
         }
@@ -57,7 +57,15 @@ public class Tile : MonoBehaviour
             tile.gridPosition = new Vector2Int((int) roundedPosition.x, (int) roundedPosition.z);
 
             // TODO: Snap smoothly instead of instantly.
-            tile.transform.position = roundedPosition;
+            tile.SetPosition(roundedPosition);
         }
+    }
+
+    void SetPosition(Vector3 position)
+    {
+        if (maze.player.transform.position.x == transform.position.x && maze.player.transform.position.z == transform.position.z)
+            maze.player.transform.position = new Vector3(position.x, maze.player.transform.position.y, position.z);
+
+        transform.position = position;
     }
 }
