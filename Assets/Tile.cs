@@ -43,6 +43,8 @@ public class Tile : MonoBehaviour
         else
             return;
 
+        maze.player.dragging = true;
+
         foreach (var tile in maze.tiles)
         {
             tile.SetPosition(new Vector3(tile.gridPosition.x, 0, tile.gridPosition.y));
@@ -51,32 +53,25 @@ public class Tile : MonoBehaviour
         if (abs(diff.x) > abs(diff.z))
         {
             foreach (var tile in maze.tiles)
-            {
                 if (tile.gridPosition.y == (int) originalPosition.z)
-                {
                     tile.SetPosition(new Vector3(tile.gridPosition.x + diff.x, 0, originalPosition.z));
-                }
-            }
         }
         else
         {
             foreach (var tile in maze.tiles)
-            {
                 if (tile.gridPosition.x == (int) originalPosition.x)
-                {
                     tile.SetPosition(new Vector3(originalPosition.x, 0, tile.gridPosition.y + diff.z));
-                }
-            }
         }
     }
 
     void OnMouseUp()
     {
+        maze.player.dragging = false;
+
         if (!didDrag)
         {
-            var playerPosition = new Vector2Int((int) maze.player.transform.position.x, (int) maze.player.transform.position.z);
-            var sourceTile = maze.tiles.First(tile => tile.gridPosition == playerPosition);
-            var diff = gridPosition - playerPosition;
+            var sourceTile = maze.tiles.First(tile => tile.gridPosition == maze.player.gridPosition);
+            var diff = gridPosition - maze.player.gridPosition;
             var allowMove = false;
 
             if (diff == Vector2Int.up)
@@ -89,22 +84,34 @@ public class Tile : MonoBehaviour
                 allowMove = sourceTile.tileType.HasFlag(TileType.Right) && tileType.HasFlag(TileType.Left);
 
             if (allowMove)
-                maze.player.transform.position = new Vector3(gridPosition.x, maze.player.transform.position.y, gridPosition.y);
+                maze.player.SetPosition(gridPosition);
+
+            return;
         }
+
+        Vector2Int? newPlayerPosition = null;
 
         foreach (var tile in maze.tiles)
         {
             var roundedPosition = round(tile.transform.position);
-            tile.gridPosition = new Vector2Int((int) roundedPosition.x, (int) roundedPosition.z);
+            var newGridPosition = new Vector2Int((int) roundedPosition.x, (int) roundedPosition.z);
+
+            if (maze.player.gridPosition == tile.gridPosition && newPlayerPosition == null)
+                newPlayerPosition = newGridPosition;
+
+            tile.gridPosition = newGridPosition;
 
             // TODO: Snap smoothly instead of instantly.
-            tile.SetPosition(roundedPosition);
+            tile.transform.position = roundedPosition;
         }
+
+        if (newPlayerPosition != null)
+            maze.player.SetPosition(newPlayerPosition.Value);
     }
 
-    void SetPosition(Vector3 position)
+    void SetPosition(Vector3 position, bool snap = false)
     {
-        if (maze.player.transform.position.x == transform.position.x && maze.player.transform.position.z == transform.position.z)
+        if (maze.player.gridPosition == gridPosition)
             maze.player.transform.position = new Vector3(position.x, maze.player.transform.position.y, position.z);
 
         transform.position = position;

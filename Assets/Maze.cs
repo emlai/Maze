@@ -8,7 +8,7 @@ public class Maze : MonoBehaviour
     public Tile[] tiles;
     public int size;
     public GameObject tilePrefab;
-    public GameObject player;
+    public Player player;
 
     public void Generate()
     {
@@ -49,6 +49,8 @@ public class Maze : MonoBehaviour
 
         for (var i = 0; i < size * size; i++)
             tiles[i] = transform.GetChild(i).GetComponent<Tile>();
+
+        player = FindObjectOfType<Player>();
     }
 }
 
