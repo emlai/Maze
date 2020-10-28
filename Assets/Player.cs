@@ -7,7 +7,9 @@ public class Player : MonoBehaviour
     public Vector2Int gridPosition;
     public float speed;
     public bool dragging;
+    Coroutine currentAction;
     Vector3 TargetPosition => new Vector3(gridPosition.x, transform.position.y, gridPosition.y);
+    public bool IsMoving => currentAction != null;
 
     void Start()
     {
@@ -25,12 +27,22 @@ public class Player : MonoBehaviour
         gridPosition = position;
     }
 
-    public IEnumerator TracePath(List<Tile> path)
+    public void TracePath(List<Tile> path)
     {
-        foreach (var tile in path)
+        IEnumerator DoTracePath()
         {
-            SetPosition(tile.gridPosition);
-            yield return new WaitUntil(() => transform.position == TargetPosition);
+            foreach (var tile in path)
+            {
+                SetPosition(tile.gridPosition);
+                yield return new WaitUntil(() => transform.position == TargetPosition);
+            }
+
+            currentAction = null;
         }
+
+        if (currentAction != null)
+            StopCoroutine(currentAction);
+
+        currentAction = StartCoroutine(DoTracePath());
     }
 }

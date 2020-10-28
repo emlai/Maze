@@ -34,6 +34,9 @@ public class Tile : MonoBehaviour
 
     void OnMouseDrag()
     {
+        if (maze.player.IsMoving)
+            return;
+
         var curScreenPoint = new Vector3(Input.mousePosition.x, Input.mousePosition.y, screenPoint.z);
         var dragPosition = Camera.main.ScreenToWorldPoint(curScreenPoint) + offset;
         var diff = dragPosition - originalPosition;
@@ -121,7 +124,7 @@ public class Tile : MonoBehaviour
         {
             var sourceTile = maze.GetTile(maze.player.gridPosition);
             var foundPath = FindPath(sourceTile, this);
-            if (foundPath != null) StartCoroutine(maze.player.TracePath(foundPath));
+            if (foundPath != null) maze.player.TracePath(foundPath);
             return;
         }
 
