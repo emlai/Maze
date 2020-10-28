@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using static Unity.Mathematics.math;
 using UnityEngine;
@@ -64,28 +65,63 @@ public class Tile : MonoBehaviour
         }
     }
 
+    List<Tile> FindPath(Tile from, Tile to)
+    {
+        static TileType GetTileType(Vector2Int direction)
+        {
+            if (direction == Vector2Int.up)
+                return TileType.Up;
+            else if (direction == Vector2Int.down)
+                return TileType.Down;
+            else if (direction == Vector2Int.left)
+                return TileType.Left;
+            else if (direction == Vector2Int.right)
+                return TileType.Right;
+            else
+                return TileType.None;
+        }
+
+        var directions = new[] { Vector2Int.up, Vector2Int.down, Vector2Int.left, Vector2Int.right };
+        var visited = new List<Tile>();
+        var queue = new Queue<List<Tile>>();
+        queue.Enqueue(new List<Tile> { from });
+        visited.Add(from);
+
+        while (queue.Any())
+        {
+            var path = queue.Dequeue();
+            var current = path.Last();
+            if (current == to)
+                return path;
+
+            foreach (var direction in directions)
+            {
+                if (current.tileType.HasFlag(GetTileType(direction)))
+                {
+                    var neighbor = maze.GetTile(current.gridPosition + direction);
+                    if (neighbor && !visited.Contains(neighbor) && neighbor.tileType.HasFlag(GetTileType(-direction)))
+                    {
+                        visited.Add(neighbor);
+                        var newPath = new List<Tile>(path);
+                        newPath.Add(neighbor);
+                        queue.Enqueue(newPath);
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
     void OnMouseUp()
     {
         maze.player.dragging = false;
 
         if (!didDrag)
         {
-            var sourceTile = maze.tiles.First(tile => tile.gridPosition == maze.player.gridPosition);
-            var diff = gridPosition - maze.player.gridPosition;
-            var allowMove = false;
-
-            if (diff == Vector2Int.up)
-                allowMove = sourceTile.tileType.HasFlag(TileType.Up) && tileType.HasFlag(TileType.Down);
-            else if (diff == Vector2Int.down)
-                allowMove = sourceTile.tileType.HasFlag(TileType.Down) && tileType.HasFlag(TileType.Up);
-            else if (diff == Vector2Int.left)
-                allowMove = sourceTile.tileType.HasFlag(TileType.Left) && tileType.HasFlag(TileType.Right);
-            else if (diff == Vector2Int.right)
-                allowMove = sourceTile.tileType.HasFlag(TileType.Right) && tileType.HasFlag(TileType.Left);
-
-            if (allowMove)
-                maze.player.SetPosition(gridPosition);
-
+            var sourceTile = maze.GetTile(maze.player.gridPosition);
+            var foundPath = FindPath(sourceTile, this);
+            if (foundPath != null) StartCoroutine(maze.player.TracePath(foundPath));
             return;
         }
 

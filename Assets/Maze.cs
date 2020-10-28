@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using Random = Unity.Mathematics.Random;
@@ -51,6 +52,11 @@ public class Maze : MonoBehaviour
             tiles[i] = transform.GetChild(i).GetComponent<Tile>();
 
         player = FindObjectOfType<Player>();
+    }
+
+    public Tile GetTile(Vector2Int position)
+    {
+        return tiles.FirstOrDefault(tile => tile.gridPosition == position);
     }
 }
 
