@@ -14,6 +14,13 @@ public enum TileType
     Right = 1 << 3
 }
 
+public enum DragState
+{
+    NotDragging,
+    DraggingHorizontally,
+    DraggingVertically
+}
+
 public class Tile : MonoBehaviour
 {
     public Maze maze;
@@ -22,14 +29,14 @@ public class Tile : MonoBehaviour
     Vector3 originalPosition;
     Vector3 screenPoint;
     Vector3 offset;
-    bool didDrag;
+    DragState dragState;
 
     void OnMouseDown()
     {
         originalPosition = transform.position;
         screenPoint = Camera.main.WorldToScreenPoint(originalPosition);
         offset = gameObject.transform.position - Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, screenPoint.z));
-        didDrag = false;
+        dragState = DragState.NotDragging;
     }
 
     void OnMouseDrag()
@@ -43,24 +50,25 @@ public class Tile : MonoBehaviour
         var threshold = 0.1f;
 
         if (abs(diff.x) >= threshold || abs(diff.z) >= threshold)
-            didDrag = true;
+        {
+            if (dragState == DragState.NotDragging)
+                dragState = abs(diff.x) > abs(diff.z) ? DragState.DraggingHorizontally : DragState.DraggingVertically;
+        }
         else
-            return;
+            dragState = DragState.NotDragging;
 
         maze.player.dragging = true;
 
         foreach (var tile in maze.tiles)
-        {
             tile.SetPosition(new Vector3(tile.gridPosition.x, 0, tile.gridPosition.y));
-        }
 
-        if (abs(diff.x) > abs(diff.z))
+        if (dragState == DragState.DraggingHorizontally)
         {
             foreach (var tile in maze.tiles)
                 if (tile.gridPosition.y == (int) originalPosition.z)
                     tile.SetPosition(new Vector3(tile.gridPosition.x + diff.x, 0, originalPosition.z));
         }
-        else
+        else if (dragState == DragState.DraggingVertically)
         {
             foreach (var tile in maze.tiles)
                 if (tile.gridPosition.x == (int) originalPosition.x)
@@ -120,7 +128,7 @@ public class Tile : MonoBehaviour
     {
         maze.player.dragging = false;
 
-        if (!didDrag)
+        if (dragState == DragState.NotDragging)
         {
             var sourceTile = maze.GetTile(maze.player.gridPosition);
             var foundPath = FindPath(sourceTile, this);
