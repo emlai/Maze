@@ -3,19 +3,9 @@ using UnityEditor;
 using UnityEngine;
 using Random = Unity.Mathematics.Random;
 
-[Flags]
-public enum TileType
-{
-    None = 0,
-    Up = 1 << 0,
-    Down = 1 << 1,
-    Left = 1 << 2,
-    Right = 1 << 3
-}
-
 public class Maze : MonoBehaviour
 {
-    public Tile[,] tiles;
+    public Tile[] tiles;
     public int size;
     public GameObject tilePrefab;
     public GameObject player;
@@ -47,6 +37,7 @@ public class Maze : MonoBehaviour
 
                 var tile = gameObject.GetComponent<Tile>();
                 tile.maze = this;
+                tile.tileType = tileType;
                 tile.gridPosition = new Vector2Int(x, y);
             }
         }
@@ -54,15 +45,10 @@ public class Maze : MonoBehaviour
 
     void Awake()
     {
-        tiles = new Tile[size, size];
+        tiles = new Tile[size * size];
 
-        for (var x = 0; x < size; x++)
-        {
-            for (var y = 0; y < size; y++)
-            {
-                tiles[x, y] = transform.GetChild(x * size + y).GetComponent<Tile>();
-            }
-        }
+        for (var i = 0; i < size * size; i++)
+            tiles[i] = transform.GetChild(i).GetComponent<Tile>();
     }
 }
 
