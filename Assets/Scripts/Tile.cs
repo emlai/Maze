@@ -23,13 +23,25 @@ public enum DragState
 
 public class Tile : MonoBehaviour
 {
-    public Maze maze;
+    Maze maze;
     public TileType tileType;
     public Vector2Int gridPosition;
     Vector3 originalPosition;
     Vector3 screenPoint;
     Vector3 offset;
     DragState dragState;
+
+    void Start()
+    {
+        maze = GetComponentInParent<Maze>();
+
+        if (!transform.Find("Up").gameObject.activeSelf) tileType |= TileType.Up;
+        if (!transform.Find("Down").gameObject.activeSelf) tileType |= TileType.Down;
+        if (!transform.Find("Left").gameObject.activeSelf) tileType |= TileType.Left;
+        if (!transform.Find("Right").gameObject.activeSelf) tileType |= TileType.Right;
+
+        gridPosition = new Vector2Int((int) transform.position.x, (int) transform.position.z);
+    }
 
     void OnMouseDown()
     {
