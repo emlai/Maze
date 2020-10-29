@@ -9,6 +9,10 @@ public class Maze : MonoBehaviour
     public Tile[] tiles;
     public int size;
     public GameObject tilePrefab;
+    public Color wallColor;
+    public Color floorColor;
+    public Color playerColor;
+    public Color backgroundColor;
     public Player player;
 
     public void Generate()
@@ -28,13 +32,14 @@ public class Maze : MonoBehaviour
                 if (random.NextBool()) tileType |= TileType.Left;
                 if (random.NextBool()) tileType |= TileType.Right;
 
-                var gameObject = Instantiate(tilePrefab, new Vector3(x, 0, y), Quaternion.identity, transform);
+                var gameObject = PrefabUtility.InstantiatePrefab(tilePrefab, transform) as GameObject;
+                gameObject.transform.position = new Vector3(x, 0, y);
                 gameObject.name = $"Tile ({x}, {y})";
-                if (tileType != TileType.None) DestroyImmediate(gameObject.transform.Find("Center").gameObject);
-                if (tileType.HasFlag(TileType.Up)) DestroyImmediate(gameObject.transform.Find("Up").gameObject);
-                if (tileType.HasFlag(TileType.Down)) DestroyImmediate(gameObject.transform.Find("Down").gameObject);
-                if (tileType.HasFlag(TileType.Left)) DestroyImmediate(gameObject.transform.Find("Left").gameObject);
-                if (tileType.HasFlag(TileType.Right)) DestroyImmediate(gameObject.transform.Find("Right").gameObject);
+                if (tileType != TileType.None) gameObject.transform.Find("Center").gameObject.SetActive(false);
+                if (tileType.HasFlag(TileType.Up)) gameObject.transform.Find("Up").gameObject.SetActive(false);
+                if (tileType.HasFlag(TileType.Down)) gameObject.transform.Find("Down").gameObject.SetActive(false);
+                if (tileType.HasFlag(TileType.Left)) gameObject.transform.Find("Left").gameObject.SetActive(false);
+                if (tileType.HasFlag(TileType.Right)) gameObject.transform.Find("Right").gameObject.SetActive(false);
 
                 var tile = gameObject.GetComponent<Tile>();
                 tile.maze = this;
@@ -42,6 +47,20 @@ public class Maze : MonoBehaviour
                 tile.gridPosition = new Vector2Int(x, y);
             }
         }
+    }
+
+    void OnValidate()
+    {
+        foreach (var renderer in GetComponentsInChildren<Renderer>())
+        {
+            if (renderer.gameObject.name == "Floor")
+                renderer.sharedMaterial.color = floorColor;
+            else
+                renderer.sharedMaterial.color = wallColor;
+        }
+
+        GameObject.Find("Player").GetComponent<Renderer>().sharedMaterial.color = playerColor;
+        Camera.main.backgroundColor = backgroundColor;
     }
 
     void Awake()
