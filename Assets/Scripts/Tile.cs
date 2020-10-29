@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using static Unity.Mathematics.math;
+using Unity.Mathematics;
 using UnityEngine;
 
 [Flags]
@@ -61,10 +61,10 @@ public class Tile : MonoBehaviour
         var diff = dragPosition - originalPosition;
         var threshold = 0.1f;
 
-        if (abs(diff.x) >= threshold || abs(diff.z) >= threshold)
+        if (math.abs(diff.x) >= threshold || math.abs(diff.z) >= threshold)
         {
             if (dragState == DragState.NotDragging)
-                dragState = abs(diff.x) > abs(diff.z) ? DragState.DraggingHorizontally : DragState.DraggingVertically;
+                dragState = math.abs(diff.x) > math.abs(diff.z) ? DragState.DraggingHorizontally : DragState.DraggingVertically;
         }
         else
             dragState = DragState.NotDragging;
@@ -74,17 +74,43 @@ public class Tile : MonoBehaviour
         foreach (var tile in maze.tiles)
             tile.SetPosition(new Vector3(tile.gridPosition.x, 0, tile.gridPosition.y));
 
-        if (dragState == DragState.DraggingHorizontally)
+        if (dragState == DragState.DraggingHorizontally && diff.x != 0)
         {
-            foreach (var tile in maze.tiles)
-                if (tile.gridPosition.y == (int) originalPosition.z)
-                    tile.SetPosition(new Vector3(tile.gridPosition.x + diff.x, 0, originalPosition.z));
+            var pushedTiles = 0;
+
+            for (var i = 0; i < 100; i++)
+            {
+                var nextPosition = new Vector2Int(this.gridPosition.x + i * (int) math.sign(diff.x), (int) originalPosition.z);
+                var nextTile = maze.tiles.FirstOrDefault(tile => tile.gridPosition == nextPosition);
+                if (nextTile)
+                {
+                    var totalDiff = diff.x + math.sign(diff.x) * pushedTiles;
+
+                    if (math.abs(this.gridPosition.x - nextTile.gridPosition.x) < math.abs(totalDiff))
+                        nextTile.SetPosition(new Vector3(this.gridPosition.x + totalDiff, 0, originalPosition.z));
+
+                    pushedTiles++;
+                }
+            }
         }
-        else if (dragState == DragState.DraggingVertically)
+        else if (dragState == DragState.DraggingVertically && diff.z != 0)
         {
-            foreach (var tile in maze.tiles)
-                if (tile.gridPosition.x == (int) originalPosition.x)
-                    tile.SetPosition(new Vector3(originalPosition.x, 0, tile.gridPosition.y + diff.z));
+            var pushedTiles = 0;
+
+            for (var i = 0; i < 100; i++)
+            {
+                var nextPosition = new Vector2Int((int) originalPosition.x, this.gridPosition.y + i * (int) math.sign(diff.z));
+                var nextTile = maze.tiles.FirstOrDefault(tile => tile.gridPosition == nextPosition);
+                if (nextTile)
+                {
+                    var totalDiff = diff.z + math.sign(diff.z) * pushedTiles;
+
+                    if (math.abs(this.gridPosition.y - nextTile.gridPosition.y) < math.abs(totalDiff))
+                        nextTile.SetPosition(new Vector3(originalPosition.x, 0, this.gridPosition.y + totalDiff));
+
+                    pushedTiles++;
+                }
+            }
         }
     }
 
@@ -92,16 +118,11 @@ public class Tile : MonoBehaviour
     {
         static TileType GetTileType(Vector2Int direction)
         {
-            if (direction == Vector2Int.up)
-                return TileType.Up;
-            else if (direction == Vector2Int.down)
-                return TileType.Down;
-            else if (direction == Vector2Int.left)
-                return TileType.Left;
-            else if (direction == Vector2Int.right)
-                return TileType.Right;
-            else
-                return TileType.None;
+            if (direction == Vector2Int.up) return TileType.Up;
+            if (direction == Vector2Int.down) return TileType.Down;
+            if (direction == Vector2Int.left) return TileType.Left;
+            if (direction == Vector2Int.right) return TileType.Right;
+            return TileType.None;
         }
 
         var directions = new[] { Vector2Int.up, Vector2Int.down, Vector2Int.left, Vector2Int.right };
@@ -152,7 +173,7 @@ public class Tile : MonoBehaviour
 
         foreach (var tile in maze.tiles)
         {
-            var roundedPosition = round(tile.transform.position);
+            var roundedPosition = math.round(tile.transform.position);
             var newGridPosition = new Vector2Int((int) roundedPosition.x, (int) roundedPosition.z);
 
             if (maze.player.gridPosition == tile.gridPosition && newPlayerPosition == null)
