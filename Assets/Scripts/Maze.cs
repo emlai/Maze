@@ -3,6 +3,13 @@ using Unity.Mathematics;
 using UnityEditor;
 using UnityEngine;
 
+public enum DragState
+{
+    NotDragging,
+    DraggingHorizontally,
+    DraggingVertically
+}
+
 [ExecuteInEditMode]
 public class Maze : MonoBehaviour
 {
@@ -12,6 +19,7 @@ public class Maze : MonoBehaviour
     public Color playerColor;
     public Color backgroundColor;
     public Player player;
+    public DragState dragState;
 
     void OnValidate()
     {

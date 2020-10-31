@@ -13,13 +13,6 @@ public enum TileType
     Right = 1 << 3
 }
 
-public enum DragState
-{
-    NotDragging,
-    DraggingHorizontally,
-    DraggingVertically
-}
-
 public class Tile : MonoBehaviour
 {
     Maze maze;
@@ -28,7 +21,8 @@ public class Tile : MonoBehaviour
     public bool immovable;
     Vector3 screenPoint;
     Vector3 offset;
-    DragState dragState;
+    bool didDrag;
+    Vector3 TargetPosition => new Vector3(gridPosition.x, transform.position.y, gridPosition.y);
 
     void Start()
     {
@@ -42,11 +36,17 @@ public class Tile : MonoBehaviour
         gridPosition = new Vector2Int((int) transform.position.x, (int) transform.position.z);
     }
 
+    void Update()
+    {
+        if (maze.dragState == DragState.NotDragging)
+            transform.position = Vector3.MoveTowards(transform.position, TargetPosition, 5 * Time.deltaTime);
+    }
+
     void OnMouseDown()
     {
         screenPoint = Camera.main.WorldToScreenPoint(transform.position);
         offset = transform.position - Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, screenPoint.z));
-        dragState = DragState.NotDragging;
+        maze.dragState = DragState.NotDragging;
     }
 
     void OnMouseDrag()
@@ -60,18 +60,18 @@ public class Tile : MonoBehaviour
 
         if (math.abs(diff.x) >= threshold || math.abs(diff.z) >= threshold)
         {
-            if (dragState == DragState.NotDragging)
-                dragState = math.abs(diff.x) > math.abs(diff.z) ? DragState.DraggingHorizontally : DragState.DraggingVertically;
+            if (maze.dragState == DragState.NotDragging)
+                maze.dragState = math.abs(diff.x) > math.abs(diff.z) ? DragState.DraggingHorizontally : DragState.DraggingVertically;
+
+            didDrag = true;
         }
         else
-            dragState = DragState.NotDragging;
-
-        maze.player.dragging = true;
+            maze.dragState = DragState.NotDragging;
 
         foreach (var tile in maze.tiles)
             tile.SetVisualPosition(new Vector3(tile.gridPosition.x, 0, tile.gridPosition.y));
 
-        if (dragState == DragState.DraggingHorizontally && diff.x != 0)
+        if (maze.dragState == DragState.DraggingHorizontally && diff.x != 0)
         {
             var sign = (int) math.sign(diff.x);
             var pushedTiles = 0;
@@ -105,7 +105,7 @@ public class Tile : MonoBehaviour
                 }
             }
         }
-        else if (dragState == DragState.DraggingVertically && diff.z != 0)
+        else if (maze.dragState == DragState.DraggingVertically && diff.z != 0)
         {
             var sign = (int) math.sign(diff.z);
             var pushedTiles = 0;
@@ -143,13 +143,14 @@ public class Tile : MonoBehaviour
 
     void OnMouseUp()
     {
-        maze.player.dragging = false;
-
-        if (dragState == DragState.NotDragging)
+        if (!didDrag)
         {
             maze.player.TryToMove(gridPosition);
             return;
         }
+
+        maze.dragState = DragState.NotDragging;
+        didDrag = false;
 
         Vector2Int? newPlayerPosition = null;
 
@@ -162,9 +163,6 @@ public class Tile : MonoBehaviour
                 newPlayerPosition = newGridPosition;
 
             tile.gridPosition = newGridPosition;
-
-            // TODO: Snap smoothly instead of instantly.
-            tile.transform.position = roundedPosition;
         }
 
         if (newPlayerPosition != null)

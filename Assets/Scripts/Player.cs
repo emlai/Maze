@@ -8,7 +8,6 @@ public class Player : MonoBehaviour
     Maze maze;
     public Vector2Int gridPosition;
     public float speed;
-    public bool dragging;
     Coroutine currentAction;
     public Vector3 TargetPosition => new Vector3(gridPosition.x, transform.position.y, gridPosition.y);
     public bool IsMoving => currentAction != null;
@@ -21,7 +20,7 @@ public class Player : MonoBehaviour
 
     void Update()
     {
-        if (!dragging)
+        if (maze.dragState == DragState.NotDragging)
             transform.position = Vector3.MoveTowards(transform.position, TargetPosition, speed * Time.deltaTime);
 
         if (!IsMoving)
@@ -35,7 +34,7 @@ public class Player : MonoBehaviour
 
     public void TryToMove(Vector2Int to)
     {
-        if (dragging) return;
+        if (maze.dragState != DragState.NotDragging) return;
         var source = maze.GetTile(maze.player.gridPosition);
         var target = maze.GetTile(to);
         if (!target) return;
