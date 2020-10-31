@@ -85,27 +85,27 @@ namespace UnityTemplateProjects
         Vector3 GetInputTranslationDirection()
         {
             Vector3 direction = new Vector3();
-            if (Input.GetKey(KeyCode.W))
+            if (Input.GetKey(KeyCode.UpArrow))
             {
                 direction += Vector3.forward;
             }
-            if (Input.GetKey(KeyCode.S))
+            if (Input.GetKey(KeyCode.DownArrow))
             {
                 direction += Vector3.back;
             }
-            if (Input.GetKey(KeyCode.A))
+            if (Input.GetKey(KeyCode.LeftArrow))
             {
                 direction += Vector3.left;
             }
-            if (Input.GetKey(KeyCode.D))
+            if (Input.GetKey(KeyCode.RightArrow))
             {
                 direction += Vector3.right;
             }
-            if (Input.GetKey(KeyCode.Q))
+            if (Input.GetKey(KeyCode.PageDown))
             {
                 direction += Vector3.down;
             }
-            if (Input.GetKey(KeyCode.E))
+            if (Input.GetKey(KeyCode.PageUp))
             {
                 direction += Vector3.up;
             }

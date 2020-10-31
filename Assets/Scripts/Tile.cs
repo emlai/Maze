@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using Unity.Mathematics;
 using UnityEngine;
@@ -142,58 +141,13 @@ public class Tile : MonoBehaviour
         }
     }
 
-    List<Tile> FindPath(Tile from, Tile to)
-    {
-        static TileType GetTileType(Vector2Int direction)
-        {
-            if (direction == Vector2Int.up) return TileType.Up;
-            if (direction == Vector2Int.down) return TileType.Down;
-            if (direction == Vector2Int.left) return TileType.Left;
-            if (direction == Vector2Int.right) return TileType.Right;
-            return TileType.None;
-        }
-
-        var directions = new[] { Vector2Int.up, Vector2Int.down, Vector2Int.left, Vector2Int.right };
-        var visited = new List<Tile>();
-        var queue = new Queue<List<Tile>>();
-        queue.Enqueue(new List<Tile> { from });
-        visited.Add(from);
-
-        while (queue.Any())
-        {
-            var path = queue.Dequeue();
-            var current = path.Last();
-            if (current == to)
-                return path;
-
-            foreach (var direction in directions)
-            {
-                if (current.tileType.HasFlag(GetTileType(direction)))
-                {
-                    var neighbor = maze.GetTile(current.gridPosition + direction);
-                    if (neighbor && !visited.Contains(neighbor) && neighbor.tileType.HasFlag(GetTileType(-direction)))
-                    {
-                        visited.Add(neighbor);
-                        var newPath = new List<Tile>(path);
-                        newPath.Add(neighbor);
-                        queue.Enqueue(newPath);
-                    }
-                }
-            }
-        }
-
-        return null;
-    }
-
     void OnMouseUp()
     {
         maze.player.dragging = false;
 
         if (dragState == DragState.NotDragging)
         {
-            var sourceTile = maze.GetTile(maze.player.gridPosition);
-            var foundPath = FindPath(sourceTile, this);
-            if (foundPath != null) maze.player.TracePath(foundPath);
+            maze.player.TryToMove(gridPosition);
             return;
         }
 
@@ -214,14 +168,23 @@ public class Tile : MonoBehaviour
         }
 
         if (newPlayerPosition != null)
-            maze.player.SetPosition(newPlayerPosition.Value);
+            maze.player.SetGridPosition(newPlayerPosition.Value);
     }
 
-    void SetVisualPosition(Vector3 position, bool snap = false)
+    void SetVisualPosition(Vector3 position)
     {
         if (maze.player.gridPosition == gridPosition)
             maze.player.transform.position = new Vector3(position.x, maze.player.transform.position.y, position.z);
 
         transform.position = position;
+    }
+
+    public static TileType GetTileType(Vector2Int direction)
+    {
+        if (direction == Vector2Int.up) return TileType.Up;
+        if (direction == Vector2Int.down) return TileType.Down;
+        if (direction == Vector2Int.left) return TileType.Left;
+        if (direction == Vector2Int.right) return TileType.Right;
+        return TileType.None;
     }
 }
