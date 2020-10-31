@@ -17,9 +17,9 @@ public class Maze : MonoBehaviour
     {
         foreach (var renderer in GetComponentsInChildren<Renderer>())
         {
-            if (renderer.gameObject.name == "Floor")
+            if (renderer.sharedMaterial.name == "Floor Material")
                 renderer.sharedMaterial.color = floorColor;
-            else
+            else if (renderer.sharedMaterial.name == "Wall Material")
                 renderer.sharedMaterial.color = wallColor;
         }
 
