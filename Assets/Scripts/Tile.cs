@@ -27,7 +27,6 @@ public class Tile : MonoBehaviour
     public TileType tileType;
     public Vector2Int gridPosition;
     public bool immovable;
-    Vector3 originalPosition;
     Vector3 screenPoint;
     Vector3 offset;
     DragState dragState;
@@ -46,9 +45,8 @@ public class Tile : MonoBehaviour
 
     void OnMouseDown()
     {
-        originalPosition = transform.position;
-        screenPoint = Camera.main.WorldToScreenPoint(originalPosition);
-        offset = gameObject.transform.position - Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, screenPoint.z));
+        screenPoint = Camera.main.WorldToScreenPoint(transform.position);
+        offset = transform.position - Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, screenPoint.z));
         dragState = DragState.NotDragging;
     }
 
@@ -57,9 +55,8 @@ public class Tile : MonoBehaviour
         if (maze.player.IsMoving)
             return;
 
-        var curScreenPoint = new Vector3(Input.mousePosition.x, Input.mousePosition.y, screenPoint.z);
-        var dragPosition = Camera.main.ScreenToWorldPoint(curScreenPoint) + offset;
-        var diff = dragPosition - originalPosition;
+        var dragPosition = Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, screenPoint.z)) + offset;
+        var diff = dragPosition - new Vector3(gridPosition.x, 0, gridPosition.y);
         var threshold = 0.1f;
 
         if (math.abs(diff.x) >= threshold || math.abs(diff.z) >= threshold)
@@ -82,7 +79,7 @@ public class Tile : MonoBehaviour
 
             for (var i = 0; i < 100; i++)
             {
-                var nextPosition = new Vector2Int(this.gridPosition.x + i * sign, (int) originalPosition.z);
+                var nextPosition = new Vector2Int(gridPosition.x + i * sign, gridPosition.y);
                 var nextTile = maze.tiles.FirstOrDefault(tile => tile.gridPosition == nextPosition);
                 if (!nextTile) continue;
                 if (nextTile.immovable) break;
@@ -91,20 +88,20 @@ public class Tile : MonoBehaviour
 
                 for (var j = 0; j < 100; j++)
                 {
-                    var farthestPushPosition = new Vector2Int(this.gridPosition.x + j * sign, (int) originalPosition.z);
+                    var farthestPushPosition = new Vector2Int(gridPosition.x + j * sign, gridPosition.y);
                     var farthestPushedTile = maze.tiles.FirstOrDefault(tile => tile.gridPosition == farthestPushPosition);
                     if (farthestPushedTile && farthestPushedTile.immovable)
                     {
-                        var numberOfTilesBetween = maze.tiles.Count(tile => tile.gridPosition.x.IsBetween(this.gridPosition.x, farthestPushPosition.x) && tile.gridPosition.y == this.gridPosition.y);
-                        var limit = (farthestPushedTile.gridPosition.x - this.gridPosition.x) - (1 + numberOfTilesBetween - pushedTiles) * sign;
+                        var numberOfTilesBetween = maze.tiles.Count(tile => tile.gridPosition.x.IsBetween(gridPosition.x, farthestPushPosition.x) && tile.gridPosition.y == gridPosition.y);
+                        var limit = (farthestPushedTile.gridPosition.x - gridPosition.x) - (1 + numberOfTilesBetween - pushedTiles) * sign;
                         totalDiff = totalDiff > 0 ? math.min(totalDiff, limit) : math.max(totalDiff, limit);
                         break;
                     }
                 }
 
-                if (math.abs(this.gridPosition.x - nextTile.gridPosition.x) < math.abs(totalDiff))
+                if (math.abs(gridPosition.x - nextTile.gridPosition.x) < math.abs(totalDiff))
                 {
-                    nextTile.SetVisualPosition(new Vector3(this.gridPosition.x + totalDiff, 0, originalPosition.z));
+                    nextTile.SetVisualPosition(new Vector3(gridPosition.x + totalDiff, 0, gridPosition.y));
                     pushedTiles++;
                 }
             }
@@ -116,7 +113,7 @@ public class Tile : MonoBehaviour
 
             for (var i = 0; i < 100; i++)
             {
-                var nextPosition = new Vector2Int((int) originalPosition.x, this.gridPosition.y + i * sign);
+                var nextPosition = new Vector2Int(gridPosition.x, gridPosition.y + i * sign);
                 var nextTile = maze.tiles.FirstOrDefault(tile => tile.gridPosition == nextPosition);
                 if (!nextTile) continue;
                 if (nextTile.immovable) break;
@@ -125,20 +122,20 @@ public class Tile : MonoBehaviour
 
                 for (var j = 0; j < 100; j++)
                 {
-                    var farthestPushPosition = new Vector2Int((int) originalPosition.x, this.gridPosition.y + j * sign);
+                    var farthestPushPosition = new Vector2Int(gridPosition.x, gridPosition.y + j * sign);
                     var farthestPushedTile = maze.tiles.FirstOrDefault(tile => tile.gridPosition == farthestPushPosition);
                     if (farthestPushedTile && farthestPushedTile.immovable)
                     {
-                        var numberOfTilesBetween = maze.tiles.Count(tile => tile.gridPosition.y.IsBetween(this.gridPosition.y, farthestPushPosition.y) && tile.gridPosition.x == this.gridPosition.x);
-                        var limit = (farthestPushedTile.gridPosition.y - this.gridPosition.y) - (1 + numberOfTilesBetween - pushedTiles) * sign;
+                        var numberOfTilesBetween = maze.tiles.Count(tile => tile.gridPosition.y.IsBetween(gridPosition.y, farthestPushPosition.y) && tile.gridPosition.x == gridPosition.x);
+                        var limit = (farthestPushedTile.gridPosition.y - gridPosition.y) - (1 + numberOfTilesBetween - pushedTiles) * sign;
                         totalDiff = totalDiff > 0 ? math.min(totalDiff, limit) : math.max(totalDiff, limit);
                         break;
                     }
                 }
 
-                if (math.abs(this.gridPosition.y - nextTile.gridPosition.y) < math.abs(totalDiff))
+                if (math.abs(gridPosition.y - nextTile.gridPosition.y) < math.abs(totalDiff))
                 {
-                    nextTile.SetVisualPosition(new Vector3(originalPosition.x, 0, this.gridPosition.y + totalDiff));
+                    nextTile.SetVisualPosition(new Vector3(gridPosition.x, 0, gridPosition.y + totalDiff));
                     pushedTiles++;
                 }
             }
